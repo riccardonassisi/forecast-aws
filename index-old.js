@@ -160,8 +160,7 @@ const calcolaImporti = async(user, result) => {
   const eurval = await currencyConverter.convert()
   const eurprev = Number(eurval.toFixed(2))
 
-  if ((today.getMonth() + 1) % 3 == 0) {
-
+  if ((today.getMonth() + 1) % 3 === 0) {
 
     const currencyConverter = new CC({
       from: "USD",
@@ -176,16 +175,16 @@ const calcolaImporti = async(user, result) => {
 
     /*
 
-            //  update userlist per azzerare conguaglio
-            const res = await documentClient.update({
-                TableName: 'Utenti',
-                Key: { Key: user.ID },
-                UpdateExpression: 'set #a = :x',
-                ExpressionAttributeNames: { '#a': 'FondoConguaglio' },
-                ExpressionAttributeValues: { ':x': 0 }
-            }).promise();
+    //  update userlist per azzerare conguaglio
+    const res = await documentClient.update({
+        TableName: 'Utenti',
+        Key: { Key: user.ID },
+        UpdateExpression: 'set #a = :x',
+        ExpressionAttributeNames: { '#a': 'FondoConguaglio' },
+        ExpressionAttributeValues: { ':x': 0 }
+    }).promise();
 
-            */
+    */
   }
 
   imp = eurprev + flatf + mark
@@ -220,110 +219,107 @@ const calcolaImporti = async(user, result) => {
 
 }
 
-const spedisciFattura = async(info, payed, nome) => {
+// const spedisciFattura = async(info, payed, nome) => {
 
-  const url = "https://api.fattureincloud.it:443/v1/fatture/nuovo/"
+//   const url = "https://api.fattureincloud.it:443/v1/fatture/nuovo/"
 
-  const fattura = {
-    api_uid: "844201",
-    api_key: "6cc4bbf0963d6f92476f8ed0dd4651f5",
-    id_client: info.FICId,
-    nome,
-    autocompilazione_anagrafica: true,
-    valuta: "EUR",
-    lista_articoli: [
-      {
-        nome: "Mensilità Infrastructure Service",
-        descrizione: "Previsione forecast per il periodo dal " + startDate + " al " + endDate,
-        prezzo_netto: info.Previsione,
-        cod_iva: 0
-      },
-      {
-        nome: "Quota fissa assegnata al cliente",
-        descrizione: "Importo fisso mensile di erogazione del servizio",
-        prezzo_netto: info.FlatFee,
-        cod_iva: 0
-      }
-    ],
-    lista_pagamenti: []
-  }
+//   const fattura = {
+//     api_uid: "844201",
+//     api_key: "6cc4bbf0963d6f92476f8ed0dd4651f5",
+//     id_client: info.FICId,
+//     nome,
+//     autocompilazione_anagrafica: true,
+//     valuta: "EUR",
+//     lista_articoli: [
+//       {
+//         nome: "Mensilità Infrastructure Service",
+//         descrizione: "Previsione forecast per il periodo dal " + startDate + " al " + endDate,
+//         prezzo_netto: info.Previsione,
+//         cod_iva: 0
+//       },
+//       {
+//         nome: "Quota fissa assegnata al cliente",
+//         descrizione: "Importo fisso mensile di erogazione del servizio",
+//         prezzo_netto: info.FlatFee,
+//         cod_iva: 0
+//       }
+//     ],
+//     lista_pagamenti: []
+//   }
 
-  if (info.Conguaglio != 0) {
-    fattura.lista_articoli.push({
-      nome: "Conguaglio",
-      descrizione: "Conguaglio differenza previsione-costo effettivo del trimestre passato",
-      prezzo_netto: info.Conguaglio,
-      cod_iva: 0
-    })
-  }
+//   if (info.Conguaglio != 0) {
+//     fattura.lista_articoli.push({
+//       nome: "Conguaglio",
+//       descrizione: "Conguaglio differenza previsione-costo effettivo del trimestre passato",
+//       prezzo_netto: info.Conguaglio,
+//       cod_iva: 0
+//     })
+//   }
 
-  if (info.Markup != 0) {
-    fattura.lista_articoli.push({
-      nome: "Markup aggiuntivo al cliente",
-      descrizione: "Markup in aggiunta al cliente",
-      prezzo_netto: info.Markup,
-      cod_iva: 0
-    })
-  }
+//   if (info.Markup != 0) {
+//     fattura.lista_articoli.push({
+//       nome: "Markup aggiuntivo al cliente",
+//       descrizione: "Markup in aggiunta al cliente",
+//       prezzo_netto: info.Markup,
+//       cod_iva: 0
+//     })
+//   }
 
-  if (info.Discount != 0) {
-    fattura.lista_articoli.push({
-      nome: "Sconto aggiuntivo al cliente",
-      descrizione: "Sconto aggiuntivo al cliente",
-      prezzo_netto: info.Discount,
-      cod_iva: 9
-    })
-  }
+//   if (info.Discount != 0) {
+//     fattura.lista_articoli.push({
+//       nome: "Sconto aggiuntivo al cliente",
+//       descrizione: "Sconto aggiuntivo al cliente",
+//       prezzo_netto: info.Discount,
+//       cod_iva: 9
+//     })
+//   }
 
-  const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const s = dueDate.getDate() + "/" + (dueDate.getMonth() + 1) + "/" + dueDate.getFullYear()
-  const o = today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear()
+//   const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+//   const dueFormatted = dueDate.getDate() + "/" + (dueDate.getMonth() + 1) + "/" + dueDate.getFullYear()
+//   const todayFormatted = today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear()
 
-  if (payed == "succeeded") {
+//   if (payed == "succeeded") {
 
-    fattura.lista_pagamenti.push({
-      data_scadenza: s,
-      importo: "auto",
-      metodo: "not",
-      data_saldo: o
-    })
-  } else {
+//     fattura.lista_pagamenti.push({
+//       data_scadenza: dueFormatted,
+//       importo: "auto",
+//       metodo: "not",
+//       data_saldo: todayFormatted
+//     })
+//   } else {
 
-    fattura.lista_pagamenti.push({
-      data_scadenza: s,
-      importo: "auto",
-      metodo: "not"
-    })
-  }
+//     fattura.lista_pagamenti.push({
+//       data_scadenza: dueFormatted,
+//       importo: "auto",
+//       metodo: "not"
+//     })
+//   }
 
-  const toSend = JSON.stringify(fattura)
+//   return await fetch(url, {
+//     method: "post",
+//     body: JSON.stringify(fattura),
+//     headers: { "Content-Type": "application/json" }
+//   })
 
-  console.log(toSend)
 
-  const res = await fetch("https://api.fattureincloud.it/v1/fatture/nuovo", {
-    method: "post",
-    body: JSON.stringify(fattura),
-    headers: { "Content-Type": "application/json" }
-  })
+// }
 
-}
+// const payWithStripe = async(totale, id) => {
 
-const payWithStripe = async(totale, id) => {
+//   // prendo utente a cui inviare il payment intent
+//   const cliente = await stripe.customers.retrieve(id)
 
-  // prendo utente a cui inviare il payment intent
-  const cliente = await stripe.customers.retrieve(id)
+//   const pInt = await stripe.paymentIntents.create({
+//     amount: Number(totale * 100).toFixed(0),           // importo in centesimi
+//     currency: "eur",
+//     customer: id,                           // id stripe per fare la charge direttamente sul cliente
+//     description: "Pagamento mensile preventivo, addebitato al cliente " + cliente.name + ", per l\"AWS Infrastructure Professional Service.",
+//     confirm: true                                   // indirizzamento automatico dell'intenzione di pagamento di stripe
+//   })
 
-  const pInt = await stripe.paymentIntents.create({
-    amount: Number(totale * 100).toFixed(0),           // importo in centesimi
-    currency: "eur",
-    customer: id,                           // id stripe per fare la charge direttamente sul cliente
-    description: "Pagamento mensile preventivo, addebitato al cliente " + cliente.name + ", per l\"AWS Infrastructure Professional Service.",
-    confirm: true                                   // indirizzamento automatico dell'intenzione di pagamento di stripe
-  })
+//   return pInt.status
 
-  return pInt.status
-
-}
+// }
 
 const main = async() => {
 
@@ -348,22 +344,22 @@ const main = async() => {
 
       let paymentResult
 
-      if (user.MetodoPagamento == "Stripe") {
+      if (user.MetodoPagamento === "Stripe") {
 
         console.log(invoiceInfo.Totale)
 
-        paymentResult = await payWithStripe(invoiceInfo.Totale, user.StripeId)
+        // paymentResult = await payWithStripe(invoiceInfo.Totale, user.StripeId)
 
-      } else if (user.MetodoPagamento == "") {
+      } else if (user.MetodoPagamento === "") {
 
         // do nothing
 
       }
 
-      await spedisciFattura(invoiceInfo, paymentResult, user.Nome)
+      // await spedisciFattura(invoiceInfo, paymentResult, user.Nome)
 
       // put costanalysis
-      // const ca = await documentClient.put({TableName: 'AnalisiCosti',Item: {results}}).promise();
+      // const ca = await documentClient.put({TableName: 'AnalisiCosti',Item: {result  s}}).promise();
 
       const printJson = JSON.stringify(results)
       await fs.writeFile("/home/riccardonassisi/Desktop/fake_db/" + filename, printJson)
