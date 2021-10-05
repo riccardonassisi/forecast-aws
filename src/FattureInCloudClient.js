@@ -1,7 +1,7 @@
 const fetch = require("node-fetch")
 const { formatDate } = require("./utils.js")
 
-class StripeClient {
+class FattureInCloudClient {
   #apiPath
   #apiUid
   #apiKey
@@ -12,7 +12,7 @@ class StripeClient {
     this.#apiPath = apiPath
   }
 
-  async sendInvoice({ fattureInCloudCustomerId, paymentResult, customerName, startDate, endDate, forcast, flatFee, paymentAdjustment, markup, discount }) {
+  async sendInvoice({ fattureInCloudCustomerId, paymentResult, customerName, startDate, endDate, forecast, flatFee, paymentAdjustment, markup, discount }) {
     const invoice = {
       api_uid: this.#apiUid,
       api_key: this.#apiKey,
@@ -25,7 +25,7 @@ class StripeClient {
         {
           nome: "Mensilità Infrastructure Service",
           descrizione: `Previsione forecast per il periodo dal ${formatDate(startDate)} al ${formatDate(endDate)}`,
-          prezzo_netto: forcast,
+          prezzo_netto: forecast,
           cod_iva: 0
         },
         {
@@ -70,7 +70,7 @@ class StripeClient {
     const dueDateFormatted = formatDate(dueDate)
     const todayFormatted = formatDate(today)
 
-    if (paymentResult === "succeeded") {
+    if (paymentResult) {
       invoice.lista_pagamenti.push({
         data_scadenza: dueDateFormatted,
         importo: "auto",
@@ -99,4 +99,4 @@ class StripeClient {
   }
 }
 
-module.exports = StripeClient
+module.exports = FattureInCloudClient

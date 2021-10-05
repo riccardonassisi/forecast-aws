@@ -2,7 +2,6 @@ const AWS = require("aws-sdk")
 const fs = require("fs").promises
 const Stripe = require("stripe")
 const fetch = require("node-fetch")
-const CC = require("currency-converter-lt")
 
 AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: "sandbox" })
 const documentClient = new AWS.DynamoDB.DocumentClient()
@@ -43,7 +42,7 @@ const setTags = async(tags, stripeId) => {
       And: [
         {
           Tags: {
-            Key: "StripeId",
+            Key: "stripeId",
             MatchOptions: [
               "EQUALS"
             ],
@@ -54,7 +53,7 @@ const setTags = async(tags, stripeId) => {
         },
         {
           Tags: {
-            Key: "TipoContratto",
+            Key: "type",
             MatchOptions: [
               "EQUALS"
             ],
@@ -69,20 +68,20 @@ const setTags = async(tags, stripeId) => {
 
 
   /**
-       * Se si vogliono effettivamente hardcodare i tags, va definito un ordine STANDARD in modo che l'ordine
-       * non sia un problema oppure definire a priori delle length in modo da fare degli "stampini" per i tag.
-       * Altrimenti basta passare semplicemente tagkey e tagvalue
-       */
+   * Se si vogliono effettivamente hardcodare i tags, va definito un ordine STANDARD in modo che l'ordine
+   * non sia un problema oppure definire a priori delle length in modo da fare degli "stampini" per i tag.
+   * Altrimenti basta passare semplicemente tagkey e tagvalue
+   */
 
-  for (const t in tags) {
+  for (const t of tags) {
     params.Filter.And.push({
       Tags: {
-        Key: "prova",
+        Key: t.tagName,
         MatchOptions: [
           "EQUALS"
         ],
         Values: [
-          t
+          t.tagValue
         ]
       }
     })
@@ -100,8 +99,7 @@ const calcolaForecast = async user => {
     FICId: user.FICId,
     PeriodoTotale: timeSpan,
     PrevisioneTotale: 0,
-    Valuta: "USD",
-    PrevisioneAccount: []
+    Valuta: "USD"
   }
 
   let amount = 0
@@ -113,11 +111,6 @@ const calcolaForecast = async user => {
 
     const params = await setTags(cred.Tags, user.StripeId)
 
-    console.log(" -- FORECAST -- ")
-    console.log(cred.idAccount)
-    console.log(params.Filter)
-    console.log("")
-
     // const data = await cexp.getCostForecast(params).promise();
     // console.dir(data, { depth: null });
     const data = {
@@ -127,16 +120,11 @@ const calcolaForecast = async user => {
       }
     }
 
-    ca.PrevisioneAccount.push({ Account: cred.idAccount, Previsione: Number(data.Total.Amount).toFixed(2) })
     amount = Number(data.Total.Amount) + Number(amount)
 
   }
 
   ca.PrevisioneTotale = amount.toFixed(2)
-
-  console.log(" -- RESULT FORECAST -- ")
-  console.log(ca)
-  console.log("")
 
   return ca
 }
@@ -151,26 +139,11 @@ const calcolaImporti = async(user, result) => {
   let imp = 0
   let tot = 0
 
-  const currencyConverter = new CC({
-    from: "USD",
-    to: "EUR",
-    amount: prev
-  })
-
-  const eurval = await currencyConverter.convert()
-  const eurprev = Number(eurval.toFixed(2))
+  const eurprev = Number(prev.toFixed(2))
 
   if ((today.getMonth() + 1) % 3 === 0) {
 
-    const currencyConverter = new CC({
-      from: "USD",
-      to: "EUR",
-      amount: Number(user.FondoConguaglio)
-    })
-
-    const eurcong = await currencyConverter.convert()
-
-    cong = Number(eurcong)
+    cong = Number(user.FondoConguaglio)
     user.FondoConguaglio = 0
 
     /*
@@ -178,7 +151,7 @@ const calcolaImporti = async(user, result) => {
     //  update userlist per azzerare conguaglio
     const res = await documentClient.update({
         TableName: 'Utenti',
-        Key: { Key: user.ID },
+        Key: { id: user.ID },
         UpdateExpression: 'set #a = :x',
         ExpressionAttributeNames: { '#a': 'FondoConguaglio' },
         ExpressionAttributeValues: { ':x': 0 }
@@ -210,10 +183,6 @@ const calcolaImporti = async(user, result) => {
     Totale: Number(tot.toFixed(2)),
     Conguaglio: Number(cong.toFixed(2))
   }
-
-  console.log(" -- RESULT CALCOLO IMPORTI -- ")
-  console.log(data)
-  console.log("")
 
   return data
 
@@ -332,7 +301,7 @@ const main = async() => {
 
   for (const user of userInfo) {
 
-    const filename = "cost-analisys_" + user.StripeId + "_" + startDate.slice(0, 7) + ".json"
+    const filename = "cost-analysis_" + user.StripeId + "_" + startDate.slice(0, 7) + ".json"
     // const ca = await documentClient.get({TableName: 'AnalisiCosti',Key:{Chiave: user.ID + '_' + startDate.slice(0, 7)}}).promise();
 
     // SE IL FILE / RIGA-DEL-DB NON ESISTE ENTRO E FACCIO TUTTI I CALCOLI NECESSARI
@@ -345,8 +314,6 @@ const main = async() => {
       let paymentResult
 
       if (user.MetodoPagamento === "Stripe") {
-
-        console.log(invoiceInfo.Totale)
 
         // paymentResult = await payWithStripe(invoiceInfo.Totale, user.StripeId)
 

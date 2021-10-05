@@ -22,3 +22,18 @@ e.convertCurrency = async({ amount, from, to }) => {
   }
 
 }
+
+e.getStartNextMonth = () => {
+  const today = new Date()
+  return String(new Date(today.getFullYear(), today.getMonth() + 1, 2).toISOString()).slice(0, 10)
+}
+
+e.getEndNextMonth = () => {
+  const today = new Date()
+  return String(new Date(today.getFullYear(), today.getMonth() + 2).toISOString()).slice(0, 10)
+}
+
+e.calculateAmount = ({ forecast, flatfee, markup, adjustment, discount }) => {
+  const taxable = forecast + flatfee + markup + adjustment
+  return Number((taxable + (taxable * 0.22) - discount).toFixed(2))
+}
