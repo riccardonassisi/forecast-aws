@@ -22,7 +22,7 @@ const {
 
 const forecastClient = new ForecastClient()
 const stateConnector = new StateConnector({
-  statePath: STATE_PATH
+  // statePath: STATE_PATH
 })
 const stripeClient = new StripeClient({
   secretKey: STRIPE_SECRET_KEY
@@ -35,12 +35,14 @@ const fattureInCloudClient = new FattureInCloudClient({
 
 
 void (async() => {
-  // TODO scrivere tutta la logica che collega i punti
+
   const customersList = await stateConnector.listCustomers("infra_professional_service")
   for (const customer of customersList) {
 
     const fileName = `${customer.id}_${getStartNextMonth().slice(0, 7)}.json`
-    const analysisConnector = new AnalysisConnector({ filename: fileName, analysisPath: ANALYSIS_PATH })
+    const analysisConnector = new AnalysisConnector({ filename: fileName/* , analysisPath: ANALYSIS_PATH*/ })
+
+    // if analysisConnector.get() { // do nothing } else { do what you gotta do }
 
     let totalForecast = 0
 
@@ -52,23 +54,21 @@ void (async() => {
     }
 
     // inserisco valore del forecast nel db come file intero/come riga del db per calcolare il costo in futuro
-    analysisConnector.setAnalysis(customer.id, getStartNextMonth(), getEndNextMonth(), totalForecast)
+    await analysisConnector.setAnalysis(customer.id, getStartNextMonth(), getEndNextMonth(), totalForecast)
 
     let paymentAdjustment = 0
     // trimestralmente (marzo, giugno, settembre, dicembre) azzero il fondo conguaglio e lo inserisco in fattura
-    if ((new Date()).getMonth() + 1 % 3 === 0) {
+    if ((new Date()).getMonth() === 9) {
       // effettuo già il cambio valuta mentre prendo il valore
-      paymentAdjustment = convertCurrency({ amount: Number(customer.paymentAdjustment), from: "USD", to: "EUR" })
+      paymentAdjustment = Number(await convertCurrency({ amount: Number(customer.paymentAdjustment), from: "USD", to: "EUR" }))
       customer.paymentAdjustment = 0
 
-      stateConnector.updateCustomer(customer)     // aggiorno il cliente dopo aver settato il fondo a 0
+      await stateConnector.updateCustomer(customer)     // aggiorno il cliente dopo aver settato il fondo a 0
     }
-
     // converto in euro la previsione del forecast
     totalForecast = await convertCurrency({ amount: totalForecast, from: "USD", to: "EUR" })
 
     const amountToPay = calculateAmount({ forecast: totalForecast, flatfee: customer.flatFee, markup: customer.markup, adjustment: paymentAdjustment, discount: customer.discount })
-
     const stripeResult = await stripeClient.executePayment(customer.stripeId, amountToPay)
 
     await fattureInCloudClient.sendInvoice({ fattureInCloudCustomerId: customer.ficId, paymentResult: (stripeResult.status === "succeeded"), customerName: customer.name, startDate: new Date(getStartNextMonth()), endDate: new Date(getEndNextMonth()), forecast: totalForecast, flatFee: customer.flatFee, paymentAdjustment, markup: customer.markup, discount: customer.discount })

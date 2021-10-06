@@ -1,35 +1,6 @@
-/*
-  {
-    "ID": "001",
-    "Nome": "Stupid Simple Sandro",
-    "StripeId": "cus_KK0M4clISrL5GV",
-    "FICId": "001",
-    "Accounts": [
-      {
-        "idAccount": "s3official@prova.com",
-        "Tags": [
-          "T1",
-          "T2",
-          "T3"
-        ]
-    },
-    {
-        "idAccount": "s3@prova.com",
-        "Tags": [
-          "T1",
-          "T2"
-        ]
-      }
-    ],
-    "TipoContratto": "infra_professional_service",
-    "FondoConguaglio": -23,
-    "FlatFee": 123,
-    "Discount": 12,
-    "Markup": 0,
-    "MetodoPagamento": "Stripe"
-  }
-
-*/
+const AWS = require("aws-sdk")
+AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: "sandbox" })
+const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" })
 
 const { readFileSync, writeFileSync } = require("fs")
 
@@ -58,9 +29,19 @@ class StateConnector {
     writeFileSync(this.#statePath, JSON.stringify(this.#state))
   }
 
-  updateCustomer(customer) {
+  async updateCustomer(customer) {
     if (this.#useDynamo) {
-      // TODO fare la query su dynamo equivalente
+      await documentClient.delete({
+        TableName: "customers",
+        Key: {
+          id: customer.id
+        }
+      }).promise()
+
+      return await documentClient.put({
+        TableName: "customers",
+        Item: customer
+      }).promise()
     } else {
       for (let i = 0, l = this.#state.length; i < l; i++) {
         if (this.#state[i].id === customer.id) {
@@ -71,20 +52,30 @@ class StateConnector {
     }
   }
 
-  addCustormer(customer) {
+  async addCustormer(customer) {
     if (this.#useDynamo) {
-      // TODO fare la query su dynamo equivalente
+      return await documentClient.put({
+        TableName: "customers",
+        Item: customer
+      }).promise()
     } else {
       this.#state.push(customer)
       this.saveLocalState()
     }
   }
 
-  listCustomers(type) {
+  async listCustomers(type) {
     if (this.#useDynamo) {
-      // TODO fare la query su dynamo equivalente
+      const data = await documentClient.scan({
+        TableName: "customers",
+        ExpressionAttributeValues: {
+          ":t": type
+        },
+        FilterExpression: "contractType = :t"
+      }).promise()
+      return data.Items
     } else {
-      return this.#state.filter(e => type === e.type)
+      return this.#state.filter(e => type === e.contractType)
     }
   }
 }
