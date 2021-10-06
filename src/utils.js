@@ -33,6 +33,69 @@ e.getEndNextMonth = () => {
   return String(new Date(today.getFullYear(), today.getMonth() + 2).toISOString()).slice(0, 10)
 }
 
+e.getStartPastMonth = () => {
+  const today = new Date()
+  return String(new Date(today.getFullYear(), today.getMonth() - 1, 2).toISOString()).slice(0, 10)
+}
+
+e.getEndPastMonth = () => {
+  const today = new Date()
+  return String(new Date(today.getFullYear(), today.getMonth()).toISOString()).slice(0, 10)
+}
+
+e.setParams = (tags, stripeId, startDate, endDate) => {
+  const params = {
+    Granularity: "MONTHLY",
+    Metric: "UNBLENDED_COST",
+    TimePeriod: {
+      Start: startDate,
+      End: endDate
+    },
+    Filter: {
+      And: [
+        {
+          Tags: {
+            Key: "stripeId",
+            MatchOptions: [
+              "EQUALS"
+            ],
+            Values: [
+              stripeId
+            ]
+          }
+        },
+        {
+          Tags: {
+            Key: "type",
+            MatchOptions: [
+              "EQUALS"
+            ],
+            Values: [
+              "infra_professional_service"
+            ]
+          }
+        }
+      ]
+    }
+  }
+
+  for (const t of tags) {
+    params.Filter.And.push({
+      Tags: {
+        Key: t.tagName,
+        MatchOptions: [
+          "EQUALS"
+        ],
+        Values: [
+          t.tagValue
+        ]
+      }
+    })
+  }
+
+  return params
+}
+
 e.calculateAmount = ({ forecast, flatfee, markup, adjustment, discount }) => {
   const taxable = forecast + flatfee + markup + adjustment
   return Number((taxable + (taxable * 0.22) - discount).toFixed(2))

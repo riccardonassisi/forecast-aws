@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk")
-AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: "sandbox" })
-const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" })
+AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
+const documentClient = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_STANDARD_REGION })
 
 const { readFileSync, writeFileSync } = require("fs")
 

@@ -1,18 +1,19 @@
 const { readFileSync, writeFileSync } = require("fs")
 const { join } = require("path")
 const AWS = require("aws-sdk")
-AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: "sandbox" })
-const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" })
+AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
+const documentClient = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_STANDARD_REGION })
 
-// ha senso mettere nello stesso attributo p il path del file o l'id del db??
 class AnalysisConnector {
   #useDynamo = false
-  #analysisPath = null // path del file o id del db
+  #analysisPath = null // path del file
+  #id = null  // id del db
   #analysis
 
   constructor({ filename, analysisPath }) {
     if (analysisPath) {
       this.#analysisPath = join(analysisPath, filename)
+      this.#id = String(filename).slice(0, -5)
       this.#useDynamo = false
       try {
         this.#analysis = JSON.parse(readFileSync(this.#analysisPath))
@@ -20,7 +21,7 @@ class AnalysisConnector {
         this.#analysis = {}
       }
     } else {
-      this.#analysisPath = filename
+      this.#id = String(filename).slice(0, -5)
       this.#useDynamo = true
     }
   }
@@ -34,7 +35,7 @@ class AnalysisConnector {
       return await documentClient.get({
         TableName: "costAnalysis",
         // eslint-disable-next-line quote-props
-        Key: { "id": this.#analysisPath }
+        Key: { "id": this.#id }
       }).promise()
     } else {
       return this.#analysis
@@ -43,7 +44,7 @@ class AnalysisConnector {
 
   async setAnalysis(customer, startDate, endDate, forecast) {
     const toInsert = {
-      id: this.#analysisPath,
+      id: this.#id,
       customer,
       periodSpan: {
         Start: startDate,
@@ -78,8 +79,8 @@ class AnalysisConnector {
         Item: analysis
       }).promise()
     } else {
-      if (this.analysis.id === analysis.id) {
-        this.analysis = analysis
+      if (this.#id === analysis.id) {
+        this.#analysis = analysis
         this.saveLocalState()
         return true
       } else {

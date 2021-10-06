@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk")
 
-class ForecastClient {
+class CostClient {
 
   #cexp
 
@@ -12,18 +12,24 @@ class ForecastClient {
   }
 
   // passo perché lo costruisco fuori dal metodo
-  async executeForecast({ params, accountName }) {
+  async executeCost({ params, accountName }) {
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: accountName })
-    // const data = await this.#cexp.getCostForecast(params).promise()
+    // const data = await cexp.getCostAndUsage(params).promise()
     const data = {
-      Total: {
-        Amount: 98.0123
-      }
+      ResultByTime: [
+        {
+          Total: {
+            BlendedCost: {
+              Amount: 91.7394
+            }
+          }
+        }
+      ]
     }
     // solo amount (unico valore che mi serve) o anche tutto il resto?
-    return data.Total.Amount
+    return data.ResultByTime[0].Total.BlendedCost.Amount
   }
 
 }
 
-module.exports = ForecastClient
+module.exports = CostClient

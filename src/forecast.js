@@ -3,7 +3,7 @@ const StripeClient = require("./StripeClient.js")
 const FattureInCloudClient = require("./FattureInCloudClient.js")
 const AnalysisConnector = require("./AnaliysisConnector.js")
 const ForecastClient = require("./ForecastClient.js")
-const { getStartNextMonth, getEndNextMonth, convertCurrency, calculateAmount } = require("./utils.js")
+const { getStartNextMonth, getEndNextMonth, convertCurrency, calculateAmount, setParams } = require("./utils.js")
 
 const { config } = require("dotenv")
 const { join } = require("path")
@@ -42,14 +42,12 @@ void (async() => {
     const fileName = `${customer.id}_${getStartNextMonth().slice(0, 7)}.json`
     const analysisConnector = new AnalysisConnector({ filename: fileName, analysisPath: ANALYSIS_PATH })
 
-    if (analysisConnector.getAnalysis()) {
-      // do nothing
-    } else {
+    if (!analysisConnector.getAnalysis().id) {
 
       let totalForecast = 0
 
       for (const account of customer.accounts) {
-        const params = forecastClient.setParams(account.tags, customer.stripeId, getStartNextMonth(), getEndNextMonth())
+        const params = setParams(account.tags, customer.stripeId, getStartNextMonth(), getEndNextMonth())
         const result = Number(await forecastClient.executeForecast(params, account.idAccount))
 
         totalForecast = totalForecast + result
@@ -60,7 +58,7 @@ void (async() => {
 
       let paymentAdjustment = 0
       // trimestralmente (marzo, giugno, settembre, dicembre) azzero il fondo conguaglio e lo inserisco in fattura
-      if ((new Date()).getMonth() === 9) {
+      if ((new Date()).getMonth() + 1 % 3 === 0) {
         // effettuo già il cambio valuta mentre prendo il valore
         paymentAdjustment = Number(await convertCurrency({ amount: Number(customer.paymentAdjustment), from: "USD", to: "EUR" }))
         customer.paymentAdjustment = 0
