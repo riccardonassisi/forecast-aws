@@ -14,14 +14,19 @@ class ForecastClient {
   // passo perché lo costruisco fuori dal metodo
   async executeForecast({ params, accountName }) {
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: accountName })
-    // const data = await this.#cexp.getCostForecast(params).promise()
-    const data = {
-      Total: {
-        Amount: 98.0123
+    try {
+      // const data = await this.#cexp.getCostForecast(params).promise()
+      const data = {
+        Total: {
+          Amount: 98.0123
+        }
       }
+      // solo amount (unico valore che mi serve) o anche tutto il resto?
+      return data.Total.Amount
+    } catch (_) {
+      return 0
     }
-    // solo amount (unico valore che mi serve) o anche tutto il resto?
-    return data.Total.Amount
+
   }
 
 }

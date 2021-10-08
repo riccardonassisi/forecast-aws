@@ -14,22 +14,27 @@ class CostClient {
   // passo perché lo costruisco fuori dal metodo
   async executeCost({ params, accountName }) {
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: accountName })
-    // const data = await cexp.getCostAndUsage(params).promise()
-    const data = {
-      ResultByTime: [
-        {
-          Total: {
-            BlendedCost: {
-              Amount: 91.7394
+
+    try {
+      // const data = await cexp.getCostAndUsage(params).promise()
+      const data = {
+        ResultByTime: [
+          {
+            Total: {
+              BlendedCost: {
+                Amount: 91.7394
+              }
             }
           }
-        }
-      ]
-    }
-    // solo amount (unico valore che mi serve) o anche tutto il resto?
-    return data.ResultByTime[0].Total.BlendedCost.Amount
-  }
+        ]
+      }
 
+      // solo amount (unico valore che mi serve) o anche tutto il resto?
+      return data.ResultByTime[0].Total.BlendedCost.Amount
+    } catch (_) {
+      return 0
+    }
+  }
 }
 
 module.exports = CostClient

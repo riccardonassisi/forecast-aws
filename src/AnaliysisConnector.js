@@ -32,11 +32,16 @@ class AnalysisConnector {
 
   async getAnalysis() {
     if (this.#useDynamo) {
-      return await documentClient.get({
-        TableName: "costAnalysis",
-        // eslint-disable-next-line quote-props
-        Key: { "id": this.#id }
-      }).promise()
+      try {
+        const res = await documentClient.get({
+          TableName: "costAnalysis",
+          // eslint-disable-next-line quote-props
+          Key: { "id": this.#id }
+        }).promise()
+        return res
+      } catch (_) {
+        return null
+      }
     } else {
       return this.#analysis
     }
@@ -55,10 +60,15 @@ class AnalysisConnector {
     }
 
     if (this.#useDynamo) {
-      return await documentClient.put({
-        TableName: "costAnalysis",
-        Item: toInsert
-      }).promise()
+      try {
+        await documentClient.put({
+          TableName: "costAnalysis",
+          Item: toInsert
+        }).promise()
+        return true
+      } catch (_) {
+        return false
+      }
     } else {
       this.#analysis = toInsert
       this.saveLocalState()
@@ -67,17 +77,21 @@ class AnalysisConnector {
 
   async updateAnalysis(analysis) {
     if (this.#useDynamo) {
-      await documentClient.delete({
-        TableName: "costAnalysis",
-        Key: {
-          id: analysis.id
-        }
-      }).promise()
-
-      return await documentClient.put({
-        TableName: "costAnalysis",
-        Item: analysis
-      }).promise()
+      try {
+        await documentClient.delete({
+          TableName: "costAnalysis",
+          Key: {
+            id: analysis.id
+          }
+        }).promise()
+        await documentClient.put({
+          TableName: "costAnalysis",
+          Item: analysis
+        }).promise()
+        return true
+      } catch (_) {
+        return false
+      }
     } else {
       if (this.#id === analysis.id) {
         this.#analysis = analysis

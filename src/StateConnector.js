@@ -31,17 +31,22 @@ class StateConnector {
 
   async updateCustomer(customer) {
     if (this.#useDynamo) {
-      await documentClient.delete({
-        TableName: "customers",
-        Key: {
-          id: customer.id
-        }
-      }).promise()
+      try {
+        await documentClient.delete({
+          TableName: "customers",
+          Key: {
+            id: customer.id
+          }
+        }).promise()
+        await documentClient.put({
+          TableName: "customers",
+          Item: customer
+        }).promise()
 
-      return await documentClient.put({
-        TableName: "customers",
-        Item: customer
-      }).promise()
+        return true
+      } catch (_) {
+        return false
+      }
     } else {
       for (let i = 0, l = this.#state.length; i < l; i++) {
         if (this.#state[i].id === customer.id) {
@@ -54,10 +59,15 @@ class StateConnector {
 
   async addCustormer(customer) {
     if (this.#useDynamo) {
-      return await documentClient.put({
-        TableName: "customers",
-        Item: customer
-      }).promise()
+      try {
+        await documentClient.put({
+          TableName: "customers",
+          Item: customer
+        }).promise()
+        return true
+      } catch (_) {
+        return false
+      }
     } else {
       this.#state.push(customer)
       this.saveLocalState()
@@ -66,14 +76,19 @@ class StateConnector {
 
   async listCustomers(type) {
     if (this.#useDynamo) {
-      const data = await documentClient.scan({
-        TableName: "customers",
-        ExpressionAttributeValues: {
-          ":t": type
-        },
-        FilterExpression: "contractType = :t"
-      }).promise()
-      return data.Items
+      try {
+        const data = await documentClient.scan({
+          TableName: "customers",
+          ExpressionAttributeValues: {
+            ":t": type
+          },
+          FilterExpression: "contractType = :t"
+        }).promise()
+        return data.Items
+      } catch (_) {
+        return null
+      }
+
     } else {
       return this.#state.filter(e => type === e.contractType)
     }
