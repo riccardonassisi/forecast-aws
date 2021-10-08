@@ -2,7 +2,6 @@ const Stripe = require("stripe")
 
 class StripeClient {
   stripe
-  #secretKey
 
   constructor({ secretKey }) {
     this.stripe = Stripe(secretKey)

@@ -1,17 +1,19 @@
+const { join } = require("path")
+require("dotenv").config({
+  path: join(__dirname, "../.env")
+})
+
 const StateConnector = require("./StateConnector.js")
 const AnalysisConnector = require("./AnaliysisConnector.js")
 const CostClient = require("./CostClient.js")
 const { setParams, getStartPastMonth, getEndPastMonth } = require("./utils.js")
 
-const { config } = require("dotenv")
-const { join } = require("path")
-config({
-  path: join(__dirname, "../.env")
-})
-
 const {
   STATE_PATH,
-  ANALYSIS_PATH
+  ANALYSIS_PATH,
+  AWS_PROFILE,
+  AWS_STANDARD_REGION,
+  AWS_ENDPOINT
 } = process.env
 
 const stateConnector = new StateConnector({
@@ -25,11 +27,13 @@ void (async() => {
   // eslint-disable-next-line prefer-const
   for (let customer of customersList) {
 
-    const fileName = `${customer.id}_${getStartPastMonth().slice(0, 7)}.json`
-    const analysisConnector = new AnalysisConnector({ filename: fileName, analysisPath: ANALYSIS_PATH })
+    // const idAnalysis = `${customer.id}_${getStartPastMonth().slice(0, 7)}`
+    // const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
+    const idAnalysis = `${customer.id}_2021-11`
+    const analysisConnector = new AnalysisConnector({ /* analysisPath: analysisFullPath,*/ id: idAnalysis })
 
-    // eslint-disable-next-line prefer-const
-    let analysis = await analysisConnector.getAnalysis()
+    const analysis = await analysisConnector.getAnalysis()
+
     if (!analysis.cost) {
 
       let totalCost = 0
@@ -41,10 +45,7 @@ void (async() => {
       }
       const difference = totalCost - Number(analysis.forecast)
 
-      analysis.cost = totalCost
-      analysis.adjustment = difference
-
-      await analysisConnector.updateAnalysis(analysis)
+      await analysisConnector.updateAnalysis(totalCost, difference)
 
       customer.paymentAdjustment = Number(customer.paymentAdjustment) + difference
 

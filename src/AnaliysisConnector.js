@@ -1,5 +1,4 @@
 const { readFileSync, writeFileSync } = require("fs")
-const { join } = require("path")
 const AWS = require("aws-sdk")
 AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
 const documentClient = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_STANDARD_REGION })
@@ -10,10 +9,10 @@ class AnalysisConnector {
   #id = null  // id del db
   #analysis
 
-  constructor({ filename, analysisPath }) {
+  constructor({ analysisPath, id }) {
     if (analysisPath) {
-      this.#analysisPath = join(analysisPath, filename)
-      this.#id = String(filename).slice(0, -5)
+      this.#analysisPath = analysisPath
+      this.#id = id
       this.#useDynamo = false
       try {
         this.#analysis = JSON.parse(readFileSync(this.#analysisPath))
@@ -21,7 +20,7 @@ class AnalysisConnector {
         this.#analysis = {}
       }
     } else {
-      this.#id = String(filename).slice(0, -5)
+      this.#id = id
       this.#useDynamo = true
     }
   }
@@ -32,16 +31,13 @@ class AnalysisConnector {
 
   async getAnalysis() {
     if (this.#useDynamo) {
-      try {
-        const res = await documentClient.get({
-          TableName: "costAnalysis",
-          // eslint-disable-next-line quote-props
-          Key: { "id": this.#id }
-        }).promise()
-        return res
-      } catch (_) {
-        return null
-      }
+      const res = await documentClient.scan({
+        TableName: "costAnalysis",
+        FilterExpression: "id = :i",
+        ExpressionAttributeValues: { ":i": this.#id }
+      }).promise()
+
+      return res.Items[0]
     } else {
       return this.#analysis
     }
@@ -75,31 +71,46 @@ class AnalysisConnector {
     }
   }
 
-  async updateAnalysis(analysis) {
+  async updateAnalysis(cost, difference) {
     if (this.#useDynamo) {
       try {
+        await documentClient.update({
+          TableName: "costAnalysis",
+          Key: {
+            id: this.#id
+          },
+          UpdateExpression: "set #cost = :cost, #diff = :diff",
+          ExpressionAttributeNames: {
+            "#cost": "cost",
+            "#diff": "adjustment"
+          },
+          ExpressionAttributeValues: {
+            ":cost": cost,
+            ":diff": difference
+          }
+        }).promise()
+        /*
         await documentClient.delete({
           TableName: "costAnalysis",
           Key: {
-            id: analysis.id
+            id: this.#id
           }
         }).promise()
-        await documentClient.put({
+
+        return await documentClient.put({
           TableName: "costAnalysis",
           Item: analysis
         }).promise()
+        */
         return true
       } catch (_) {
         return false
       }
     } else {
-      if (this.#id === analysis.id) {
-        this.#analysis = analysis
-        this.saveLocalState()
-        return true
-      } else {
-        return false
-      }
+      this.#analysis.cost = cost
+      this.#analysis.adjustment = difference
+      this.saveLocalState()
+      return true
     }
   }
 }
