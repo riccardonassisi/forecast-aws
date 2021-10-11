@@ -88,12 +88,35 @@ class StateConnector {
           FilterExpression: "contractType = :t"
         }).promise()
         return data.Items
-      } catch (_) {
+
+      } catch (err) {
         return null
       }
 
     } else {
       return this.#state.filter(e => type === e.contractType)
+    }
+  }
+
+  async getCustomer(id) {
+    if (this.#useDynamo) {
+      try {
+        const data = await documentClient.scan({
+          TableName: "customers",
+          FilterExpression: "id = :i",
+          ExpressionAttributeValues: { ":i": id }
+        }).promise()
+        return data.Items[0]
+      } catch (err) {
+        return null
+      }
+    } else {
+      for (let i = 0, l = this.#state.length; i < l; i++) {
+        if (this.#state[i].id === id) {
+          return this.#state[i]
+        }
+      }
+      return null
     }
   }
 }

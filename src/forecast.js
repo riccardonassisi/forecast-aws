@@ -21,7 +21,7 @@ const {
 
 const forecastClient = new ForecastClient()
 const stateConnector = new StateConnector({
-  /* statePath: STATE_PATH */
+  statePath: STATE_PATH
 })
 const stripeClient = new StripeClient({
   secretKey: STRIPE_SECRET_KEY
@@ -40,7 +40,7 @@ void (async() => {
 
     const idAnalysis = `${customer.id}_${getStartNextMonth().slice(0, 7)}`
     const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
-    const analysisConnector = new AnalysisConnector({ /* analysisPath: analysisFullPath, */ id: idAnalysis })
+    const analysisConnector = new AnalysisConnector({ analysisPath: analysisFullPath, id: idAnalysis })
 
     if (!analysisConnector.getAnalysis().id) {
 

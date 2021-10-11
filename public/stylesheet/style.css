@@ -1,0 +1,25 @@
+body {
+  background-color: #444444;
+  color: whitesmoke
+}
+
+.container {
+  border: solid 2px #5b5b5b;
+  margin-top: 1em;
+}
+
+.client-card {
+  margin: 1em;
+  padding: 1em;
+  border: solid 2.5px firebrick;
+  border-radius: 0.5em;
+}
+
+a.client-card {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+a.client-card:hover {
+  border: solid 2.5px forestgreen;
+}

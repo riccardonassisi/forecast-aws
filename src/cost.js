@@ -14,7 +14,7 @@ const {
 } = process.env
 
 const stateConnector = new StateConnector({
-  /* statePath: STATE_PATH */
+  statePath: STATE_PATH
 })
 const costClient = new CostClient()
 
@@ -25,9 +25,9 @@ void (async() => {
   for (let customer of customersList) {
 
     // const idAnalysis = `${customer.id}_${getStartPastMonth().slice(0, 7)}`
-    // const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
     const idAnalysis = `${customer.id}_2021-11`
-    const analysisConnector = new AnalysisConnector({ /* analysisPath: analysisFullPath,*/ id: idAnalysis })
+    const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
+    const analysisConnector = new AnalysisConnector({ analysisPath: analysisFullPath, id: idAnalysis })
 
     const analysis = await analysisConnector.getAnalysis()
 
