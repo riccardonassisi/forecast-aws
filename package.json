@@ -6,6 +6,8 @@
     "dependencies": {
         "aws-sdk": "^2.991.0",
         "dotenv": "^10.0.0",
+        "express": "^4.17.1",
+        "express-handlebars": "^5.3.4",
         "node-fetch": "^2.6.5",
         "stripe": "^8.176.0",
         "xml2js": "^0.4.23"
