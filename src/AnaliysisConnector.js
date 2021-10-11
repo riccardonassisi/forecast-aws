@@ -89,19 +89,7 @@ class AnalysisConnector {
             ":diff": difference
           }
         }).promise()
-        /*
-        await documentClient.delete({
-          TableName: "costAnalysis",
-          Key: {
-            id: this.#id
-          }
-        }).promise()
 
-        return await documentClient.put({
-          TableName: "costAnalysis",
-          Item: analysis
-        }).promise()
-        */
         return true
       } catch (_) {
         return false

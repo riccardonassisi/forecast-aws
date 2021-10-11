@@ -10,14 +10,11 @@ const { setParams, getStartPastMonth, getEndPastMonth } = require("./utils.js")
 
 const {
   STATE_PATH,
-  ANALYSIS_PATH,
-  AWS_PROFILE,
-  AWS_STANDARD_REGION,
-  AWS_ENDPOINT
+  ANALYSIS_PATH
 } = process.env
 
 const stateConnector = new StateConnector({
-  statePath: STATE_PATH
+  /* statePath: STATE_PATH */
 })
 const costClient = new CostClient()
 
@@ -43,6 +40,7 @@ void (async() => {
         const result = Number(await costClient.executeCost(params, account.idAccount))
         totalCost = totalCost + result
       }
+
       const difference = totalCost - Number(analysis.forecast)
 
       await analysisConnector.updateAnalysis(totalCost, difference)
@@ -54,7 +52,6 @@ void (async() => {
     }
 
   }
-
 
 }) ()
 // eslint-disable-next-line no-console

@@ -16,15 +16,12 @@ const {
   STRIPE_SECRET_KEY,
   FATTURE_IN_CLOUD_API_UID,
   FATTURE_IN_CLOUD_API_KEY,
-  FATTURE_IN_CLOUD_API_PATH,
-  AWS_PROFILE,
-  AWS_STANDARD_REGION,
-  AWS_ENDPOINT
+  FATTURE_IN_CLOUD_API_PATH
 } = process.env
 
 const forecastClient = new ForecastClient()
 const stateConnector = new StateConnector({
-  statePath: STATE_PATH
+  /* statePath: STATE_PATH */
 })
 const stripeClient = new StripeClient({
   secretKey: STRIPE_SECRET_KEY
@@ -43,7 +40,7 @@ void (async() => {
 
     const idAnalysis = `${customer.id}_${getStartNextMonth().slice(0, 7)}`
     const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
-    const analysisConnector = new AnalysisConnector({ /* analysisPath: analysisFullPath,*/ id: idAnalysis })
+    const analysisConnector = new AnalysisConnector({ /* analysisPath: analysisFullPath, */ id: idAnalysis })
 
     if (!analysisConnector.getAnalysis().id) {
 
@@ -59,7 +56,7 @@ void (async() => {
       // inserisco valore del forecast nel db come file/come riga del db per confrontare il costo in futuro
       await analysisConnector.setAnalysis(customer.id, getStartNextMonth(), getEndNextMonth(), totalForecast)
 
-      /*
+
       let paymentAdjustment = 0
       // trimestralmente (marzo, giugno, settembre, dicembre) azzero il fondo conguaglio e lo inserisco in fattura
       if ((new Date()).getMonth() + 1 % 3 === 0) {
@@ -77,7 +74,7 @@ void (async() => {
       const stripeResult = await stripeClient.executePayment(customer.stripeId, amountToPay)
 
       await fattureInCloudClient.sendInvoice({ fattureInCloudCustomerId: customer.ficId, paymentResult: (stripeResult.status === "succeeded"), customerName: customer.name, startDate: new Date(getStartNextMonth()), endDate: new Date(getEndNextMonth()), forecast: totalForecast, flatFee: customer.flatFee, paymentAdjustment, markup: customer.markup, discount: customer.discount })
-      */
+
     }
   }
 

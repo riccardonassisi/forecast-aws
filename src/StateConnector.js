@@ -32,15 +32,18 @@ class StateConnector {
   async updateCustomer(customer) {
     if (this.#useDynamo) {
       try {
-        await documentClient.delete({
+        await documentClient.update({
           TableName: "customers",
           Key: {
             id: customer.id
+          },
+          UpdateExpression: "set #pa = :pa",
+          ExpressionAttributeNames: {
+            "#pa": "paymentAdjustment"
+          },
+          ExpressionAttributeValues: {
+            ":pa": customer.paymentAdjustment
           }
-        }).promise()
-        await documentClient.put({
-          TableName: "customers",
-          Item: customer
         }).promise()
 
         return true
