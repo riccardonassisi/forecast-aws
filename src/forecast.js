@@ -20,6 +20,8 @@ const {
 } = process.env
 
 const forecastClient = new ForecastClient()
+
+// se viene passato il path il connector usa il file system; se vuoto invece utilizza dynamodb
 const stateConnector = new StateConnector({
   statePath: STATE_PATH
 })
@@ -40,6 +42,8 @@ void (async() => {
 
     const idAnalysis = `${customer.id}_${getStartNextMonth().slice(0, 7)}`
     const analysisFullPath = join(ANALYSIS_PATH, `${idAnalysis}.json`)
+
+    // se viene passato solo id il connector utilizza dynamo, se invece si passa anche il path utilizza il file system
     const analysisConnector = new AnalysisConnector({ analysisPath: analysisFullPath, id: idAnalysis })
 
     if (!analysisConnector.getAnalysis().id) {
